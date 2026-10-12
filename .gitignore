@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.venv
+dist/
+__pycache__/
+*.egg-info
+.DS_Store
+ 
