@@ -3,5 +3,4 @@ from primitive_db.engine import run
 
 
 def main() -> None:
-    print("DB project is running!")
     run()
