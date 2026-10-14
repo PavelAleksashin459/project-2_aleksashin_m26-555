@@ -1,7 +1,8 @@
-from primitive_db.utils import load_metadata, save_metadata
-from primitive_db.core import create_table, drop_table
-from pathlib import Path
 import shlex
+from pathlib import Path
+
+from primitive_db.core import create_table, drop_table
+from primitive_db.utils import load_metadata, save_metadata
 
 def print_help():
     """Prints the help message for the current mode."""
@@ -30,7 +31,7 @@ def run() -> None:
         if command[0] == "create_table":
             meta_path = Path(__file__).with_name("db_meta.json")
             metadata = load_metadata(meta_path)
-            try:
+            if len(command) > 2:
                 table_meta = {}
                 for pair in command[2:]:
                     name, typ = pair.split(':')
@@ -39,20 +40,28 @@ def run() -> None:
                 if metadata is not None:
                     save_metadata(meta_path, metadata)
                     columns = metadata[command[1]]
-                    columns_text = ", ".join(f"{name}:{typ}" for name, typ in columns.items())
-                    print(f'Таблица "{command[1]}" успешно создана со столбцами: {columns_text}')
-            except:
-                print(f"Некорректное значение: <{command_raw}>. Попробуйте снова.")
+                    columns_text = ", ".join(
+                        f"{name}:{typ}" for name, typ in columns.items()
+                    )
+                    print(
+                        f'Таблица "{command[1]}" успешно создана '
+                        f'со столбцами: {columns_text}'
+                    )
+            else:
+                print(
+                    f"Некорректное значение: <{command_raw}>. "
+                    f"Попробуйте снова."
+                )
             continue
         if command[0] == "drop_table":
             meta_path = Path(__file__).with_name("db_meta.json")
             metadata = load_metadata(meta_path)
-            try:
+            if len(command) == 2:
                 metadata = drop_table(metadata, command[1])
                 if metadata is not None:
                     save_metadata(meta_path, metadata)
                     print(f'Таблица "{command[1]}" успешно удалена.')
-            except:
+            else:
                 print(f"Некорректное значение: <{command_raw}>. Попробуйте снова.")
             continue
         if command[0] == "list_tables":

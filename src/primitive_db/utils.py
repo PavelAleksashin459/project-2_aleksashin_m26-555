@@ -1,5 +1,6 @@
 import json
 
+
 def load_metadata(path: str) -> dict:
     '''
         Загружает таблицу с метаданными
@@ -8,7 +9,7 @@ def load_metadata(path: str) -> dict:
         with open(path, "r") as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f'Error: file was not found.')
+        print('Error: file was not found.')
         return {}
 
 def save_metadata(path: str, data: dict) -> None:
