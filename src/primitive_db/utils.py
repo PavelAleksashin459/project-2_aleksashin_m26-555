@@ -1,5 +1,5 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 
 def load_metadata(path: str) -> dict:
@@ -20,7 +20,7 @@ def save_metadata(path: str, data: dict) -> None:
     with open(path, "w") as file:
         json.dump(data, file)
 
-def load_table_data(table_name:str) -> dict:
+def load_table_data(table_name:str) -> list:
     '''
         Загружает данные из таблицы
     '''
@@ -29,12 +29,13 @@ def load_table_data(table_name:str) -> dict:
         with open(path, "r") as file:
             return json.load(file)
     except FileNotFoundError:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
+        return []
 
-def save_table_data(table_name:str, data: dict) -> None:
+def save_table_data(table_name:str, data: list) -> None:
     '''
         Сохраняет таблицу c данными
     '''
     path = Path(__file__).resolve().parent/'data'/f"{table_name}.json"
+    path.parent.mkdir(exist_ok=True)
     with open(path, "w") as file:
         json.dump(data, file)

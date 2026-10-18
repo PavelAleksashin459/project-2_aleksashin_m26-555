@@ -36,56 +36,55 @@ def drop_table(metadata: dict, table_name: str):
         del metadata[table_name]
         return metadata
 
-def insert(metadata: dict, table_name: str, values: list) -> None:
+def convert(value: str, typ: str):
+    '''
+        Преобразует типы
+    '''
+    if typ == "int":
+        return int(value)
+    if typ == "bool":
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
+        raise ValueError(value)
+    return value
+
+def insert(metadata: dict, table_name: str, values: list) -> list | None:
+    '''
+        Вставляет данные в таблицу
+    '''
     table = load_table_data(table_name)
-    if len(values) == len(metadata) -1:
-        keys_list = list(metadata.items())
-        converted_values = {}
-        i = 0
-        for key in keys_list[1:]:
-            if key[1] == "int":
-                try:
-                    converted_values[key[0]] = int(values[i])
-                except ValueError:
-                    print(f"Ошибка: значение <{values[i]}> не подходит для столбца {key[0]}:{key[1]}.")
-                    return None
-            elif key[1] == "str":
-                try:
-                   converted_values[key[0]] = str(values[i])
-                except ValueError:
-                    print(f"Ошибка: значение <{values[i]}> не подходит для столбца {key[0]}:{key[1]}.")
-                    return None
-            elif key[1] == "bool":
-                try:
-                    converted_values[key[0]] = bool(values[i])
-                except ValueError:
-                    print(f"Ошибка: значение <{values[i]}> не подходит для столбца {key[0]}:{key[1]}.")
-                    return None
-            i += 1
-        new_id = max((int(k) for k in table), default=0) + 1
-        table[new_id] = converted_values
-        return table
-    else: 
+    columns = [(name, typ) for name, typ in metadata.items() if name != "ID"]
+    if len(values) != len(columns):
         print("Ошибка: количество значений не совпадает с количеством столбцов.")
         return None
 
-def select(table_data:dict, where_clause = None):
-    if where_clause == None:
-        table_data
-    else:
-        filtered_table = {item for item in table_data.items() if where_clause in item.value()}
-        return filtered_table
+    new_id = max((row["ID"] for row in table), default=0) + 1
+    row = {"ID": new_id}
+    for (name, typ), value in zip(columns, values):
+        try:
+            row[name] = convert(value, typ)
+        except ValueError:
+            print(f"Ошибка: значение <{value}> не подходит для столбца {name}:{typ}.")
+            return None
 
-def update(table_data:dict, set_clause:dict, where_clause:dict):
-    for item in table_data.items():
-        for value in item.values():
-            if value == where_clause:
-                item[set_clause.key()] = set_clause.value()
+    table.append(row)
+    return table
+
+def matches(row: dict, where_clause: dict) -> bool:
+    return all(row.get(key) == value for key, value in where_clause.items())
+
+def select(table_data: list, where_clause: dict | None = None) -> list:
+    if where_clause is None:
+        return table_data
+    return [row for row in table_data if matches(row, where_clause)]
+
+def update(table_data: list, set_clause: dict, where_clause: dict) -> list:
+    for row in table_data:
+        if matches(row, where_clause):
+            row.update(set_clause)
     return table_data
 
-def delete(table_data, where_clause):
-    for item in table_data.items():
-        for value in item.values():
-            if value == where_clause:
-                del table_data[item]
-    return table_data
+def delete(table_data: list, where_clause: dict) -> list:
+    return [row for row in table_data if not matches(row, where_clause)]
