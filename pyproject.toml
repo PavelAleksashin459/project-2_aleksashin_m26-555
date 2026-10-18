@@ -1,7 +1,7 @@
 [project]
 name = "primitive-db"
 version = "0.1.0"
-description = "Домашнее задание 2 иммитирующее создание базы данных"
+description = "Консольная база данных, имитирующая работу СУБД"
 readme = "README.md"
 authors = [
     { name = "Pavel Aleksashin", email = "aleksashin.pavel@inbox.ru" }

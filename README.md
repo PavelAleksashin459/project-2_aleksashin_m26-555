@@ -5,8 +5,6 @@ CRUD-операции с условиями `where`/`set`, подтвержде�
 замер времени выполнения и кэширование запросов. Метаданные хранятся
 в `db_meta.json`, данные таблиц в `data/<имя_таблицы>.json`.
 
-Сборка и установка:
-
 ## Установка
 
 ```bash
@@ -144,5 +142,5 @@ database
 
 Демонстрация:
 
-[![asciicast](hhttps://asciinema.org/a/3mCk9l8Q7GqBQojy)](https://asciinema.org/a/3mCk9l8Q7GqBQojy)
+[![asciicast](https://asciinema.org/a/3mCk9l8Q7GqBQojy.svg)](https://asciinema.org/a/3mCk9l8Q7GqBQojy)
 
