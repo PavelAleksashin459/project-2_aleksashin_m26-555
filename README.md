@@ -86,3 +86,43 @@ database
 
 [![asciicast](https://asciinema.org/a/JfsuxMqh9SEKbSik.svg)](https://asciinema.org/a/JfsuxMqh9SEKbSik)
 
+## Обработка ошибок и подтверждение действий
+
+Вспомогательные декораторы находятся в `decorators.py`.
+
+- **Обработка ошибок (`handle_db_errors`).** Перехватывает `KeyError`, `ValueError` и `FileNotFoundError` и выводит понятное сообщение вместо аварийного завершения программы. Применён к `create_table`, `drop_table` и `insert`.
+- **Подтверждение опасных операций (`confirm_action`).** Перед `drop_table` и `delete` программа спрашивает подтверждение. Операция выполняется только при ответе `y`, любой другой ответ её отменяет.
+- **Замер времени (`log_time`).** Для `select` и `insert` выводится время выполнения.
+- **Кэширование `select` (`create_cacher`).** Повторный одинаковый запрос берётся из кэша без чтения файла. Кэш сбрасывается после `insert`, `update`, `delete`, `create_table` и `drop_table`.
+
+Пример:
+
+```text
+>>>Введите команду: insert into users values ("Anna", abc, true)
+Ошибка валидации: значение <abc> не подходит для столбца age:int.
+
+>>>Введите команду: insert into users values ("Sergei", 28, true)
+Функция insert выполнилась за 0.000 секунд.
+Запись с ID=1 успешно добавлена в таблицу "users".
+
+>>>Введите команду: select from users
+Функция select выполнилась за 0.000 секунд.
++----+--------+-----+-----------+
+| ID |  name  | age | is_active |
++----+--------+-----+-----------+
+| 1  | Sergei |  28 |    True   |
++----+--------+-----+-----------+
+
+>>>Введите команду: delete from users where ID = 1
+Вы уверены, что хотите выполнить "удаление записи"? [y/n]: n
+Операция отменена.
+
+>>>Введите команду: drop_table users
+Вы уверены, что хотите выполнить "удаление таблицы"? [y/n]: y
+Таблица "users" успешно удалена.
+```
+
+Демонстрация:
+
+[![asciicast](https://asciinema.org/a/ASCIINEMA_ID.svg)](https://asciinema.org/a/ASCIINEMA_ID)
+

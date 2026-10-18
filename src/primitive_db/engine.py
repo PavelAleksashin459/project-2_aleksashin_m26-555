@@ -3,7 +3,16 @@ from pathlib import Path
 
 from prettytable import PrettyTable
 
-from primitive_db.core import create_table, delete, drop_table, insert, select, update
+from primitive_db.core import (
+    create_table,
+    delete,
+    drop_table,
+    insert,
+    matches,
+    select,
+    update,
+)
+from primitive_db.decorators import create_cacher
 from primitive_db.parser import parse_set, parse_where
 from primitive_db.utils import (
     load_metadata,
@@ -15,6 +24,7 @@ from primitive_db.utils import (
 META_FILE = "db_meta.json"
 TABLE_COMMANDS = ("create_table", "drop_table", "list_tables")
 DATA_COMMANDS = ("insert", "select", "update", "delete", "info")
+select_cache = create_cacher()
 
 
 def print_help():
@@ -60,6 +70,7 @@ def rows_to_table(rows: list) -> PrettyTable:
 
 
 def handle_table_command(args: list, command_raw: str) -> None:
+    global select_cache
     command = args[0]
     meta_path = Path(__file__).with_name(META_FILE)
     metadata = load_metadata(meta_path)
@@ -76,6 +87,7 @@ def handle_table_command(args: list, command_raw: str) -> None:
         if metadata is not None:
             save_metadata(meta_path, metadata)
             save_table_data(args[1], [])
+            select_cache = create_cacher()
             columns_text = ", ".join(
                 f"{name}:{typ}" for name, typ in metadata[args[1]].items()
             )
@@ -91,6 +103,7 @@ def handle_table_command(args: list, command_raw: str) -> None:
         metadata = drop_table(metadata, args[1])
         if metadata is not None:
             save_metadata(meta_path, metadata)
+            select_cache = create_cacher()
             print(f'Таблица "{args[1]}" успешно удалена.')
 
     elif command == "list_tables":
@@ -99,6 +112,7 @@ def handle_table_command(args: list, command_raw: str) -> None:
 
 
 def handle_data_command(args: list, head: str, where_text: str) -> None:
+    global select_cache
     command = args[0]
     table_name = args[1] if command in ("update", "info") else args[2]
     metadata = load_metadata(Path(__file__).with_name(META_FILE))
@@ -108,23 +122,28 @@ def handle_data_command(args: list, head: str, where_text: str) -> None:
 
     if command == "insert":
         values = [s.strip("(),") for s in args[4:]]
-        table = insert(metadata[table_name], table_name, values)
+        table = insert(metadata, table_name, values)
         if table is not None:
             save_table_data(table_name, table)
             print(
                 f'Запись с ID={table[-1]["ID"]} успешно добавлена '
                 f'в таблицу "{table_name}".'
             )
+        select_cache = create_cacher()
 
     elif command == "select":
         where_clause = parse_where(where_text) if where_text else None
-        rows = select(load_table_data(table_name), where_clause)
+        key = (table_name, where_text)
+        rows = select_cache(
+            key, 
+            lambda: select(load_table_data(table_name), where_clause)
+        )
         print(rows_to_table(rows))
 
     elif command == "update":
         table = load_table_data(table_name)
         where_clause = parse_where(where_text)
-        ids = [row["ID"] for row in select(table, where_clause)]
+        ids = [row["ID"] for row in table if matches(row, where_clause)]
         if not ids:
             print("Записи по условию не найдены.")
             return
@@ -136,21 +155,25 @@ def handle_data_command(args: list, head: str, where_text: str) -> None:
                 f'Запись с ID={record_id} в таблице "{table_name}" '
                 f"успешно обновлена."
             )
+        select_cache = create_cacher()
 
     elif command == "delete":
         table = load_table_data(table_name)
         where_clause = parse_where(where_text)
-        ids = [row["ID"] for row in select(table, where_clause)]
+        ids = [row["ID"] for row in table if matches(row, where_clause)]
         if not ids:
             print("Записи по условию не найдены.")
             return
         table = delete(table, where_clause)
+        if table is None:
+            return
         save_table_data(table_name, table)
         for record_id in ids:
             print(
                 f'Запись с ID={record_id} успешно удалена '
                 f'из таблицы "{table_name}".'
             )
+        select_cache = create_cacher()
 
     elif command == "info":
         columns_text = ", ".join(
