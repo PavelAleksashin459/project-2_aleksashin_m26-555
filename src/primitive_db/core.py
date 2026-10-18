@@ -1,14 +1,11 @@
+from primitive_db.constants import VALID_TYPES
 from primitive_db.decorators import confirm_action, handle_db_errors, log_time
 from primitive_db.utils import load_table_data
-
-VALID_TYPES = ("int", "str", "bool")
 
 
 @handle_db_errors
 def create_table(metadata: dict, table_name: str, columns: dict) -> dict | None:
-    '''
-        Добавляет table_name и columns
-    '''
+    """Добавляет в метаданные таблицу со столбцом ID и заданными столбцами."""
     if table_name in metadata:
         print(f'Ошибка: Таблица "{table_name}" уже существует.')
         return None
@@ -23,9 +20,7 @@ def create_table(metadata: dict, table_name: str, columns: dict) -> dict | None:
 @confirm_action("удаление таблицы")
 @handle_db_errors
 def drop_table(metadata: dict, table_name: str) -> dict | None:
-    '''
-        Удаляет таблицу
-    '''
+    """Удаляет таблицу из метаданных."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
         return None
@@ -34,9 +29,7 @@ def drop_table(metadata: dict, table_name: str) -> dict | None:
 
 
 def convert(name: str, value: str, typ: str):
-    '''
-        Преобразует значение к типу столбца
-    '''
+    """Преобразует значение к типу столбца."""
     if typ == "int" and value.lstrip("-").isdigit():
         return int(value)
     if typ == "bool" and value.lower() in ("true", "false"):
@@ -49,9 +42,7 @@ def convert(name: str, value: str, typ: str):
 @handle_db_errors
 @log_time
 def insert(metadata: dict, table_name: str, values: list) -> list | None:
-    '''
-        Вставляет данные в таблицу
-    '''
+    """Добавляет запись с новым ID и возвращает обновлённые данные таблицы."""
     schema = metadata[table_name]
     columns = [(name, typ) for name, typ in schema.items() if name != "ID"]
     if len(values) != len(columns):
@@ -70,18 +61,20 @@ def insert(metadata: dict, table_name: str, values: list) -> list | None:
 
 
 def matches(row: dict, where_clause: dict) -> bool:
+    """Проверяет, что запись удовлетворяет всем условиям where."""
     return all(row.get(key) == value for key, value in where_clause.items())
-
 
 
 @log_time
 def select(table_data: list, where_clause: dict | None = None) -> list:
+    """Возвращает все записи или только подходящие под условие."""
     if where_clause is None:
         return table_data
     return [row for row in table_data if matches(row, where_clause)]
 
 
 def update(table_data: list, set_clause: dict, where_clause: dict) -> list:
+    """Обновляет поля в записях, подходящих под условие."""
     for row in table_data:
         if matches(row, where_clause):
             row.update(set_clause)
@@ -90,4 +83,5 @@ def update(table_data: list, set_clause: dict, where_clause: dict) -> list:
 
 @confirm_action("удаление записи")
 def delete(table_data: list, where_clause: dict) -> list:
+    """Возвращает данные без записей, подходящих под условие."""
     return [row for row in table_data if not matches(row, where_clause)]

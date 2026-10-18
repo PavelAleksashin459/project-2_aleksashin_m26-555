@@ -3,6 +3,7 @@ from pathlib import Path
 
 from prettytable import PrettyTable
 
+from primitive_db.constants import DATA_COMMANDS, META_FILE, TABLE_COMMANDS
 from primitive_db.core import (
     create_table,
     delete,
@@ -21,13 +22,11 @@ from primitive_db.utils import (
     save_table_data,
 )
 
-META_FILE = "db_meta.json"
-TABLE_COMMANDS = ("create_table", "drop_table", "list_tables")
-DATA_COMMANDS = ("insert", "select", "update", "delete", "info")
 select_cache = create_cacher()
 
 
 def print_help():
+    """Выводит справку по доступным командам."""
     print("\n***Процесс работы с таблицей***")
     print("Функции:")
     print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
@@ -61,6 +60,7 @@ def print_help():
 
 
 def rows_to_table(rows: list) -> PrettyTable:
+    """Строит PrettyTable из списка записей."""
     table = PrettyTable()
     if rows:
         table.field_names = rows[0].keys()
@@ -70,6 +70,7 @@ def rows_to_table(rows: list) -> PrettyTable:
 
 
 def handle_table_command(args: list, command_raw: str) -> None:
+    """Выполняет команды create_table, drop_table и list_tables."""
     global select_cache
     command = args[0]
     meta_path = Path(__file__).with_name(META_FILE)
@@ -112,6 +113,7 @@ def handle_table_command(args: list, command_raw: str) -> None:
 
 
 def handle_data_command(args: list, head: str, where_text: str) -> None:
+    """Выполняет команды insert, select, update, delete и info."""
     global select_cache
     command = args[0]
     table_name = args[1] if command in ("update", "info") else args[2]
@@ -135,7 +137,7 @@ def handle_data_command(args: list, head: str, where_text: str) -> None:
         where_clause = parse_where(where_text) if where_text else None
         key = (table_name, where_text)
         rows = select_cache(
-            key, 
+            key,
             lambda: select(load_table_data(table_name), where_clause)
         )
         print(rows_to_table(rows))
@@ -185,6 +187,7 @@ def handle_data_command(args: list, head: str, where_text: str) -> None:
 
 
 def run() -> None:
+    """Запускает основной цикл обработки команд пользователя."""
     print("database")
     print_help()
 

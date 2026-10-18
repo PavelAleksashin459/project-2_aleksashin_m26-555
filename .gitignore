@@ -224,4 +224,10 @@ dist/
 __pycache__/
 *.egg-info
 .DS_Store
+db_meta.json
+data/
+*.cast
+
+db_meta.json
+data/
  

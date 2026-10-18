@@ -124,5 +124,5 @@ database
 
 Демонстрация:
 
-[![asciicast](https://asciinema.org/a/ASCIINEMA_ID.svg)](https://asciinema.org/a/ASCIINEMA_ID)
+[![asciicast](hhttps://asciinema.org/a/3mCk9l8Q7GqBQojy)](https://asciinema.org/a/3mCk9l8Q7GqBQojy)
 

@@ -3,6 +3,7 @@ from functools import wraps
 
 
 def handle_db_errors(func):
+    """Перехватывает ошибки базы данных и выводит сообщение вместо падения."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -20,7 +21,9 @@ def handle_db_errors(func):
             print(f"Произошла непредвиденная ошибка: {e}")
     return wrapper
 
+
 def confirm_action(action_name):
+    """Запрашивает подтверждение [y/n] перед выполнением действия."""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -34,22 +37,26 @@ def confirm_action(action_name):
         return wrapper
     return decorator
 
+
 def log_time(func):
+    """Выводит время выполнения функции."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.monotonic()
         result = func(*args, **kwargs)
         end_time = time.monotonic()
         duration = end_time - start_time
-        print(f'Функция {func.__name__} выполнилась за {duration:.3f} секунд.')
+        print(f"Функция {func.__name__} выполнилась за {duration:.3f} секунд.")
         return result
     return wrapper
 
 
 def create_cacher():
+    """Создаёт функцию кэширования результатов по ключу."""
     cache = {}
 
     def cache_result(key, value_func):
+        """Возвращает результат из кэша или вычисляет и сохраняет его."""
         if key in cache:
             return cache[key]
         result = value_func()
@@ -57,5 +64,3 @@ def create_cacher():
         return result
 
     return cache_result
-
-
